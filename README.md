@@ -15,7 +15,7 @@ Reusable skills for AI coding assistants. Works with Claude Code, Codex, OpenCod
 
 ```bash
 # Install via openskills (recommended)
-npm i -g openskills
+bun i -g openskills
 openskills install Liam-Deacon/agent-skills
 openskills sync
 
