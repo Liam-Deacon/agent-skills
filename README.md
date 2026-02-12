@@ -8,6 +8,7 @@ Reusable skills for AI coding assistants. Works with Claude Code, Codex, OpenCod
 |-------|-------------|
 | `git-repo-setup` | Checklist for new repos - always set local git identity |
 | `terminal-recording` | Create terminal recordings with asciinema |
+| `senior-engineer-note-maker` | High-readability engineering markdown with aligned tables, ASCII diagrams, citations, and provenance scaffolds |
 
 ## Installation
 
@@ -32,6 +33,7 @@ git clone git@github.com:Liam-Deacon/agent-skills.git ~/.codex/skills/personal
 # Or install individual skills
 cp -r git-repo-setup ~/.codex/skills/
 cp -r src/terminal-recording ~/.codex/skills/
+cp -r senior-engineer-note-maker ~/.codex/skills/
 ```
 
 ### OpenCode
