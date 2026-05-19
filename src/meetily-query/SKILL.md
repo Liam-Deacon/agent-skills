@@ -18,7 +18,7 @@ authors:
 when_to_use: "When you need to search, read, or process meeting transcripts and summaries stored locally by the Meetily app"
 capabilities: "List meetings, retrieve full transcripts with timestamps, read AI-generated summaries and action items"
 technologies: "SQLite, Python, Meetily, macOS"
-related_skills: ["agent-skills/meetily-mcp"]
+related_skills: []
 ---
 
 # Query Meetily Meeting Data
