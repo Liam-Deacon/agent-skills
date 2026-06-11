@@ -9,6 +9,7 @@ Reusable skills for AI coding assistants. Works with Claude Code, Codex, OpenCod
 | `git-repo-setup` | Checklist for new repos - always set local git identity |
 | `terminal-recording` | Create terminal recordings with asciinema |
 | `senior-engineer-note-maker` | High-readability engineering markdown with aligned tables, ASCII diagrams, citations, and provenance scaffolds |
+| `mock-review-html` | Tabbed GitHub-style HTML mockup of held PR review drafts, with real PR context (description, timeline, verbatim diff strips) for pre-posting human review |
 
 ## Installation
 
