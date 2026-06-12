@@ -1,0 +1,4 @@
+interface:
+  display_name: "Senior Engineer Note Maker"
+  short_description: "Readable engineering markdown with citations"
+  default_prompt: "Write a senior-level markdown doc, PR description, issue description, or PR comment using aligned tables, ASCII diagrams, and evidence-based citations."
