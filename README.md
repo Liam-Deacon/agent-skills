@@ -10,6 +10,8 @@ Reusable skills for AI coding assistants. Works with Claude Code, Codex, OpenCod
 | `terminal-recording` | Create terminal recordings with asciinema |
 | `senior-engineer-note-maker` | High-readability engineering markdown with aligned tables, ASCII diagrams, citations, and provenance scaffolds |
 | `mock-review-html` | Tabbed GitHub-style HTML mockup of held PR review drafts, with real PR context (description, timeline, verbatim diff strips) for pre-posting human review |
+| `markdown-doc-enrichment` | Engineering-doc upgrade pass: mermaid over ASCII, admonitions, posterity folds, decision-history versioning, and a red-team fact-check before shipping |
+| `html-review-pack` | Self-contained offline HTML artifacts (chat mockups, tabbed packs, decision packs) so humans review outward-bound content in its destination medium before it fires |
 
 ## Installation
 
