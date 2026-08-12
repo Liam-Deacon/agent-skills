@@ -31,7 +31,7 @@ git clone git@github.com:Liam-Deacon/agent-skills.git ~/.codex/skills/personal
 
 # Or install individual skills
 cp -r git-repo-setup ~/.codex/skills/
-cp -r src/terminal-recording ~/.codex/skills/
+cp -r terminal-recording ~/.codex/skills/
 ```
 
 ### OpenCode
