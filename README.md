@@ -8,6 +8,7 @@ Reusable skills for AI coding assistants. Works with Claude Code, Codex, OpenCod
 |-------|-------------|
 | `git-repo-setup` | Checklist for new repos - always set local git identity |
 | `terminal-recording` | Create terminal recordings with asciinema |
+| `red-team-review` | Adversarial self-review of your own diff before a human sees it, with a falsification gate and a failure scenario per finding |
 
 ## Installation
 
@@ -31,6 +32,7 @@ git clone git@github.com:Liam-Deacon/agent-skills.git ~/.codex/skills/personal
 
 # Or install individual skills
 cp -r git-repo-setup ~/.codex/skills/
+cp -r red-team-review ~/.codex/skills/
 cp -r src/terminal-recording ~/.codex/skills/
 ```
 
