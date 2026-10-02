@@ -6,6 +6,9 @@ Reusable skills for AI coding assistants. Works with Claude Code, Codex, OpenCod
 
 | Skill | Description |
 |-------|-------------|
+| `llm-council` | Independent Claude Code, Codex and Cursor Agent responses |
+| `llm-council-setup` | Guided council CLI installation, authentication and configuration |
+| `llm-council-members` | Configure council member defaults for the current session |
 | `git-repo-setup` | Checklist for new repos - always set local git identity |
 | `terminal-recording` | Create terminal recordings with asciinema |
 
