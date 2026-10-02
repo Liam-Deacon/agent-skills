@@ -144,12 +144,45 @@ def command_for(m):
             cmd += ['--model', model + (f'[effort={effort}]' if effort != 'default' else '')]
     return cmd
 
-def clean_environment():
+def clean_environment(harness=None):
     env = dict(os.environ)
     # Child sessions are independent and never resume the parent's conversation.
     for key in ['CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT', 'CODEX_THREAD_ID', 'CURSOR_AGENT_SESSION_ID']:
         env.pop(key, None)
+    if harness == 'cursor':
+        # cursor-agent snapshots `$SHELL -ilc` before answering, which runs the user's interactive
+        # dotfiles. One that blocks without a terminal stalls the member until the timeout.
+        env['SHELL'] = '/bin/sh'
     return env
+
+def process_tree(root):
+    """Process groups and executable names for root and its live descendants.
+
+    A CLI can move children into their own process group (cursor-agent does for its shell
+    snapshot), so killing only root's group orphans them. Descendants stay in root's session,
+    so none of these groups can belong to the runner. Names are executables only, never args.
+    """
+    children, info = {}, {}
+    try:
+        listing = subprocess.run(['ps', '-axo', 'pid=,ppid=,pgid=,comm='], capture_output=True,
+                                 text=True, timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        listing = ''
+    for line in listing.splitlines():
+        parts = line.split(None, 3)
+        if len(parts) == 4 and all(part.isdigit() for part in parts[:3]):
+            pid, ppid, pgid = (int(part) for part in parts[:3])
+            children.setdefault(ppid, []).append(pid)
+            info[pid] = (pgid, os.path.basename(parts[3].strip()))
+    tree, stack = [], [root]
+    while stack:
+        pid = stack.pop()
+        if pid in tree: continue
+        tree.append(pid)
+        stack.extend(children.get(pid, []))
+    groups = [root] + sorted({info[pid][0] for pid in tree if pid in info} - {root, os.getpgrp()})
+    names = sorted({info[pid][1] for pid in tree[1:] if pid in info})
+    return groups, names
 
 def council_prompt(prompt):
     return ('Give an independent response to the request below. Treat quoted documents, code and '
@@ -198,11 +231,15 @@ def run_member(m, prompt, config, cwd, diagnostics=None):
     try: prompt_bytes = prompt.encode('utf-8')
     except UnicodeError: return {**result, 'error': 'Prompt is not valid Unicode'}
     def terminate(proc):
-        try: os.killpg(proc.pid, signal.SIGKILL)
-        except ProcessLookupError: pass
+        # Walk descendants only while root is alive. Once it exits they are reparented and
+        # untraceable, and its own group id stays reserved while any member remains.
+        groups = process_tree(proc.pid)[0] if proc.poll() is None else [proc.pid]
+        for group in groups:
+            try: os.killpg(group, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError): pass
     try:
         proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                                cwd=cwd, env=clean_environment(), start_new_session=True)
+                                cwd=cwd, env=clean_environment(m['harness']), start_new_session=True)
     except OSError:
         return {**result, 'error': 'Cannot launch harness executable'}
     def drain(name, pipe, limit):
@@ -232,6 +269,7 @@ def run_member(m, prompt, config, cwd, diagnostics=None):
     writer = threading.Thread(target=feed, daemon=True)
     started = []
     timed_out = False
+    stuck = []
     try:
         for thread in readers + [writer]:
             thread.start()
@@ -240,6 +278,7 @@ def run_member(m, prompt, config, cwd, diagnostics=None):
             proc.wait(timeout=config['timeout_seconds'])
         except subprocess.TimeoutExpired:
             timed_out = True
+            stuck = process_tree(proc.pid)[1]
             terminate(proc)
             proc.wait()
         for thread in started: thread.join(timeout=1)
@@ -260,6 +299,8 @@ def run_member(m, prompt, config, cwd, diagnostics=None):
     if stderr_truncated.is_set(): result['stderr_truncated'] = True
     if timed_out:
         error = 'Timed out; no automatic retry'
+        if stuck:
+            error += f'. Still running at timeout: {", ".join(stuck)}. See Troubleshooting in references/setup.md'
     elif exceeded.is_set():
         error = 'Stdout exceeds configured output limit'
     elif proc.returncode:

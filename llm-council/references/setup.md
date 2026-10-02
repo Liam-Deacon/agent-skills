@@ -19,3 +19,11 @@ Install all three sibling skill folders (`llm-council`, `llm-council-setup`, `ll
 Cursor temporary permission controls follow https://prod.cursor.com/docs/cli/reference/permissions and https://prod.cursor.com/docs/cli/reference/configuration. Deny takes precedence over inherited allow rules. This config lives only in the runner workspace and does not alter user preferences.
 
 Redaction markers in known provider authentication environment variables stop that member before it launches. Report variable names only, obtain real values privately, and do not rotate credentials or expand grants to compensate.
+
+## Troubleshooting a member that times out
+
+Retry that member alone on a one-line prompt before blaming the packet. If a trivial prompt also times out, the CLI is stuck before the model call, not in it.
+
+The timeout error names the executables still running. A shell there (`zsh`, `bash`, `sh`) means the CLI was stuck in shell startup. cursor-agent snapshots `$SHELL -ilc` before answering. The runner points Cursor at `/bin/sh`, but other wrappers may not, and one dotfile that blocks without a terminal stalls every such run. On macOS, Homebrew bash 5.3 before patch 016 deadlocks writing a heredoc of 512 bytes or more into a pipe while system pipe memory is short. `pyenv virtualenv-init` in a zsh startup file hits that path. Check with `bash --version`, upgrade to 5.3.16 or later, and kill any processes left hung by earlier runs.
+
+Cursor also starts every MCP server already approved in the user's Cursor config, even though the runner denies MCP calls. Expect tens of seconds of extra startup when those servers are fetched on demand, for example through `bunx` or `npx`. Review `cursor-agent mcp list` with the user. Server command lines are visible to other local processes, so keep credentials out of server arguments.

@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import subprocess
 import sys
+import time
 import unittest
 from unittest.mock import patch
 
@@ -147,6 +148,29 @@ class CouncilTests(unittest.TestCase):
         self.assertEqual(result['status'],'ok')
         self.assertEqual(result['answer'],'valid answer')
         self.assertTrue(result['stderr_truncated'])
+    def test_cursor_shell_snapshot_skips_user_dotfiles(self):
+        with patch.dict(os.environ,{'SHELL':'/bin/zsh'}):
+            self.assertEqual(c.clean_environment('cursor')['SHELL'],'/bin/sh')
+            self.assertEqual(c.clean_environment('claude')['SHELL'],'/bin/zsh')
+    def test_timeout_kills_descendant_in_its_own_process_group(self):
+        binary=self.root/'bin';binary.mkdir()
+        pidfile=self.root/'grandchild.pid'
+        fake=binary/'claude'
+        fake.write_text('#!/usr/bin/env python3\nimport subprocess,sys,time\n'
+                        'p=subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"],process_group=0)\n'
+                        f'open({str(pidfile)!r},"w").write(str(p.pid))\ntime.sleep(60)\n')
+        fake.chmod(0o700)
+        with patch.dict(os.environ,{'PATH':str(binary)+os.pathsep+os.environ['PATH']}):
+            result=c.run_member(c.member('claude:default'),'prompt',{**c.DEFAULTS,'timeout_seconds':3},self.root)
+        self.assertEqual(result['status'],'failed')
+        self.assertIn('Still running at timeout',result['error'])
+        grandchild=int(pidfile.read_text())
+        for _ in range(50):
+            try: os.kill(grandchild,0)
+            except ProcessLookupError: break
+            time.sleep(0.1)
+        else:
+            self.fail('grandchild in its own process group survived the timeout')
     def test_output_limit(self):
         binary=self.root/'bin';binary.mkdir()
         fake=binary/'claude';fake.write_text('#!/usr/bin/env python3\nimport sys\nsys.stdout.write("x"*1000000)\n');fake.chmod(0o700)
